@@ -5,7 +5,7 @@ if [ "$EUID" -ne 0 ]
   exit 1
 fi
 
-if [[ ! $(systemctl list-units --full -all | grep -Fq "terraria.service") ]]; then
+if ! $(systemctl list-units --full -all | grep -Fq "terraria.service"); then
   echo "Service 'terraria' does not exist."
   exit 1
 fi
