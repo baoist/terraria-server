@@ -83,5 +83,8 @@ fi
   exit 1
 }
 
+version_in_dir=$(head -n 1 changelog.txt| grep -Po '(([0-9]{1,2}(\.)?)+)')
+echo "Version set to: ${version_in_dir}"
+
 echo "Starting Terraria server"
 sudo systemctl start terraria
