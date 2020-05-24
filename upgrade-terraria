@@ -55,7 +55,7 @@ fi
 
 {
   cd $src_dir
-  if [ ! -d "./terraria" ]; then
+  if [ -d "./terraria" ]; then
     echo "test?"
     mv ./terraria ./terraria.bkp
   fi
