@@ -107,4 +107,4 @@ display_output "Version set to: ${version_in_dir}"
 display_output "Starting Terraria server:"
 sudo systemctl start terraria
 
-display_output $(sudo systemctl status terraria)
+display_output sudo systemctl status terraria
