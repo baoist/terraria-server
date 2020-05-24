@@ -1,0 +1,87 @@
+#!/bin/bash
+
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root."
+  exit 1
+fi
+
+if [[ ! $(systemctl list-units --full -all | grep -Fq "terraria.service") ]]; then
+  echo "Service 'terraria' does not exist."
+  exit 1
+fi
+
+server_url=$1
+echo $server_url
+
+server_config_url='https://raw.githubusercontent.com/baoist/terraria-server/master/resources/serverconfig.txt'
+
+if [[ ! -n "$server_url" ]]; then
+  echo "Server URL argument not passed."
+  exit 1
+fi
+
+tmp_dir=/tmp/upgrade-terraria
+
+mkdir -p $tmp_dir
+cd $tmp_dir
+
+curl -O $server_url
+
+if [[ $? != 0 ]]; then
+  echo "Unable to download zip"
+  exit 1
+fi
+
+zip_name=${server_url##*/}
+src_dir=/opt/
+srv_dir=/srv/
+tmp_name="terraria.server.tmp"
+
+echo "${tmp_name}.zip" $tmp_name
+rm -rf "${tmp_name}.zip" $tmp_name
+mv ${zip_name} "${tmp_name}.zip"
+
+unzip -o "${tmp_name}.zip" -d $tmp_name > /dev/null
+
+versioned_dir_name=$(ls -d terraria.server.tmp/* | tr ' ' '\n' | tail -n 1)
+
+if [[ "systemctl is-active --quiet terraria" ]]; then
+  echo "Stopping Terraria server"
+  sudo systemctl stop terraria
+else
+  echo "Terraria server not running"
+  sudo systemctl stop terraria
+fi
+
+{
+  cd $src_dir
+  if [ ! -d "./terraria" ]; then
+    echo "test?"
+    mv ./terraria ./terraria.bkp
+  fi
+
+  if [ ! -d "${tmp_dir}/${versioned_dir_name}/Linux" ]; then
+    echo "Unable to find temporary directory '${tmp_dir}/${versioned_dir_name}/Linux' (possibly 'Linux' was renamed?)"
+    exit 1
+  fi
+
+  mkdir ./terraria
+  cp -r "${tmp_dir}/${versioned_dir_name}/Linux/*" ./terraria
+  cd ./terraria
+  curl -O $server_config_url
+
+  sudo chmod +x TerrariaServer.bin.x86_64
+} || {
+  echo "Failed to move new server, reverting to previous version"
+
+  cd $src_dir
+  if [ ! -d "./terraria.bkp" ]; then
+    rm -rf ./terraria
+    mv ./terraria.bkp ./terraria
+  fi
+
+  exit 1
+}
+
+echo "Starting Terraria server"
+sudo systemctl start terraria
