@@ -55,8 +55,12 @@ fi
 
 {
   cd $src_dir
+  if [ -d "./terraria.bkp" ]; then
+    rm -rf ./terraria.bkp.1
+    mv ./terraria.bkp ./terraria.bkp.1
+  fi
+
   if [ -d "./terraria" ]; then
-    echo "test?"
     mv ./terraria ./terraria.bkp
   fi
 
@@ -65,19 +69,29 @@ fi
     exit 1
   fi
 
-  mkdir ./terraria
-  cp -r "${tmp_dir}/${versioned_dir_name}/Linux/*" ./terraria
+  mv "${tmp_dir}/${versioned_dir_name}/Linux/" ./terraria
   cd ./terraria
+
+  ls -al
   curl -O $server_config_url
 
   sudo chmod +x TerrariaServer.bin.x86_64
+
+  if [ -d "./terraria.bkp.1" ]; then
+    rm -rf ./terraria.bkp.1
+  fi
 } || {
   echo "Failed to move new server, reverting to previous version"
 
   cd $src_dir
-  if [ ! -d "./terraria.bkp" ]; then
+
+  if [ -d "./terraria.bkp" ]; then
     rm -rf ./terraria
     mv ./terraria.bkp ./terraria
+  fi
+
+  if [ -d "./terraria.bkp.1" ]; then
+    mv ./terraria.bkp.1 ./terraria.bkp
   fi
 
   exit 1
