@@ -1,26 +1,26 @@
 #!/bin/bash
 
-if [ "$EUID" -ne 0 ]
-  then echo "Please run as root."
+display_output () {
+  echo "---"
+  printf "$1\n"
+  echo "---"
+}
+
+if [ "$EUID" -ne 0 ]; then
+  display_output "Please run as root.\nExiting."
   exit 1
 fi
 
 if ! $(systemctl list-units --full -all | grep -Fq "terraria.service"); then
-  echo "Service 'terraria' does not exist."
+  display_output "Service 'terraria' does not exist.\nExiting."
   exit 1
 fi
-
-display_output () {
-  echo "---"
-  echo $1
-  echo "---"
-}
 
 server_url=$1
 server_config_url='https://raw.githubusercontent.com/baoist/terraria-server/master/resources/serverconfig.txt'
 
 if [[ ! -n "$server_url" ]]; then
-  echo "Server URL argument not passed."
+  display_output "Server URL argument not passed.\nExiting"
   exit 1
 fi
 
@@ -33,7 +33,7 @@ display_output "Downloading file from passed argument '${server_url}'."
 curl -s -O $server_url
 
 if [[ $? != 0 ]]; then
-  display_output "Unable to download zip"
+  display_output "Unable to download zip.\nExiting"
   exit 1
 fi
 
@@ -50,11 +50,10 @@ unzip -o "${tmp_name}.zip" -d $tmp_name > /dev/null
 versioned_dir_name=$(ls -d terraria.server.tmp/* | tr ' ' '\n' | tail -n 1)
 
 if [[ "systemctl is-active --quiet terraria" ]]; then
-  display_output "Stopping Terraria server"
+  display_output "Stopping Terraria server."
   sudo systemctl stop terraria
 else
-  display_output "Terraria server not running"
-  sudo systemctl stop terraria
+  display_output "Terraria server currently not running."
 fi
 
 {
@@ -69,7 +68,7 @@ fi
   fi
 
   if [ ! -d "${tmp_dir}/${versioned_dir_name}/Linux" ]; then
-    display_output "Unable to find temporary directory '${tmp_dir}/${versioned_dir_name}/Linux' (possibly 'Linux' was renamed?)"
+    display_output "Unable to find temporary directory '${tmp_dir}/${versioned_dir_name}/Linux' (possibly 'Linux' was renamed?).\nRestoring and exiting"
     exit 1
   fi
 
@@ -104,7 +103,7 @@ fi
 version_in_dir=$(head -n 1 changelog.txt| grep -Po '(([0-9]{1,2}(\.)?)+)')
 display_output "Version set to: ${version_in_dir}"
 
-display_output "Starting Terraria server:"
+display_output "Starting Terraria server"
 sudo systemctl start terraria
 
 echo ""
