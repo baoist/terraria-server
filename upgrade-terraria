@@ -25,7 +25,8 @@ tmp_dir=/tmp/upgrade-terraria
 mkdir -p $tmp_dir
 cd $tmp_dir
 
-curl -O $server_url
+echo "Downloading file from passed argument '${server_url}'."
+curl -O $server_url > /dev/null
 
 if [[ $? != 0 ]]; then
   echo "Unable to download zip"
@@ -37,7 +38,6 @@ src_dir=/opt/
 srv_dir=/srv/
 tmp_name="terraria.server.tmp"
 
-echo "${tmp_name}.zip" $tmp_name
 rm -rf "${tmp_name}.zip" $tmp_name
 mv ${zip_name} "${tmp_name}.zip"
 
@@ -72,8 +72,8 @@ fi
   mv "${tmp_dir}/${versioned_dir_name}/Linux/" ./terraria
   cd ./terraria
 
-  ls -al
-  curl -O $server_config_url
+  echo "Downloading 'serverconfig.txt' from source '${server_config_url}'."
+  curl -O $server_config_url /dev/null
 
   sudo chmod +x TerrariaServer.bin.x86_64
 
@@ -100,5 +100,7 @@ fi
 version_in_dir=$(head -n 1 changelog.txt| grep -Po '(([0-9]{1,2}(\.)?)+)')
 echo "Version set to: ${version_in_dir}"
 
-echo "Starting Terraria server"
+echo "Starting Terraria server:"
 sudo systemctl start terraria
+
+sudo systemctl status terraria
